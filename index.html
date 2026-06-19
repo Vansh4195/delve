@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Delve — Multi-Agent Deep Research</title>
+  <meta name="description" content="A client-side multi-agent deep-research engine. Bring your own LLM and web-search keys; everything runs in your browser." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>◆</text></svg>" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">◆</span>
+      <span class="brand-name">Delve</span>
+      <span class="brand-tag">multi-agent deep research</span>
+    </div>
+    <button id="settingsBtn" class="ghost-btn" aria-label="Settings">Keys &amp; Settings</button>
+  </header>
+
+  <main class="layout">
+    <section class="composer">
+      <h1 class="headline">What do you want to understand?</h1>
+      <p class="subhead">
+        Delve decomposes your question, runs parallel web searches, reads the
+        sources, has a critic agent challenge every claim, and writes a cited report.
+      </p>
+
+      <form id="askForm">
+        <textarea
+          id="question"
+          rows="3"
+          placeholder="e.g. What are the leading approaches to long-context retrieval in LLMs as of 2025, and what are their tradeoffs?"
+          autofocus
+        ></textarea>
+        <div class="composer-row">
+          <div class="composer-options">
+            <label class="inline">
+              Sub-questions
+              <select id="breadth">
+                <option value="3">3 (fast)</option>
+                <option value="4" selected>4 (balanced)</option>
+                <option value="6">6 (thorough)</option>
+              </select>
+            </label>
+            <label class="inline">
+              Results / search
+              <select id="depth">
+                <option value="4">4</option>
+                <option value="5" selected>5</option>
+                <option value="8">8</option>
+              </select>
+            </label>
+          </div>
+          <div class="composer-actions">
+            <button type="button" id="cancelBtn" class="ghost-btn" hidden>Cancel</button>
+            <button type="submit" id="runBtn" class="primary-btn">Run research</button>
+          </div>
+        </div>
+      </form>
+
+      <div id="keyWarning" class="key-warning" hidden>
+        Add an LLM key and a web-search key in
+        <button class="linklike" id="openSettingsInline">Keys &amp; Settings</button>
+        to begin.
+      </div>
+    </section>
+
+    <div class="results-grid">
+      <section class="trace-panel" aria-label="Agent trace">
+        <div class="panel-head">
+          <h2>Agent trace</h2>
+          <span id="elapsed" class="elapsed"></span>
+        </div>
+        <ol id="trace" class="trace"></ol>
+      </section>
+
+      <section class="report-panel" aria-label="Report">
+        <div class="panel-head">
+          <h2>Report</h2>
+          <button id="copyBtn" class="ghost-btn" hidden>Copy markdown</button>
+        </div>
+        <article id="report" class="report">
+          <div class="empty-state">
+            Your cited report will stream in here.
+          </div>
+        </article>
+        <div id="sources" class="sources" hidden>
+          <h3>Sources</h3>
+          <ol id="sourceList"></ol>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Settings / BYO-keys modal -->
+  <div id="settingsModal" class="modal" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+      <div class="modal-head">
+        <h2 id="settingsTitle">Keys &amp; Settings</h2>
+        <button id="closeSettings" class="ghost-btn" aria-label="Close">✕</button>
+      </div>
+
+      <p class="modal-note">
+        Keys are stored only in this browser (localStorage) and sent directly to the
+        provider you choose — never to any Delve server, because there is no Delve server.
+      </p>
+
+      <fieldset>
+        <legend>LLM provider</legend>
+        <div class="seg">
+          <label><input type="radio" name="llmProvider" value="anthropic" checked /> Anthropic</label>
+          <label><input type="radio" name="llmProvider" value="openai" /> OpenAI</label>
+        </div>
+        <label class="field">
+          <span>API key</span>
+          <input id="llmKey" type="password" placeholder="sk-ant-... or sk-..." autocomplete="off" />
+        </label>
+        <label class="field">
+          <span>Model</span>
+          <input id="llmModel" type="text" placeholder="auto" autocomplete="off" />
+          <small id="modelHint" class="hint"></small>
+        </label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Web search provider</legend>
+        <div class="seg">
+          <label><input type="radio" name="searchProvider" value="tavily" checked /> Tavily</label>
+          <label><input type="radio" name="searchProvider" value="brave" /> Brave</label>
+        </div>
+        <label class="field">
+          <span>Search API key</span>
+          <input id="searchKey" type="password" placeholder="tvly-... or BSA..." autocomplete="off" />
+        </label>
+        <small id="searchHint" class="hint"></small>
+      </fieldset>
+
+      <div class="modal-actions">
+        <button id="clearKeys" class="ghost-btn danger">Clear stored keys</button>
+        <button id="saveKeys" class="primary-btn">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <span>Delve runs entirely in your browser. Open the network tab — every request goes straight to your chosen provider.</span>
+    <a href="https://github.com/Vansh4195/delve" target="_blank" rel="noopener">Source</a>
+  </footer>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
