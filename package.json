@@ -1,0 +1,12 @@
+{
+  "name": "delve",
+  "version": "1.0.0",
+  "description": "A client-side multi-agent deep-research engine.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:e2e": "node tests/e2e.mjs",
+    "serve": "python3 -m http.server 8080"
+  },
+  "license": "MIT"
+}

@@ -62,7 +62,8 @@ makes GitHub Pages hosting trivial.
 | `index.html` / `styles.css` | UI shell, settings modal, two-panel layout |
 | `app.js` | Wiring: key storage, the live trace panel, streaming report render |
 | `engine.js` | The multi-agent orchestration (the pipeline above) |
-| `llm.js` | LLM clients — Anthropic and OpenAI, both browser-direct with SSE streaming and tool use |
+| `llm.js` | LLM clients — Anthropic, OpenAI, and Gemini (OpenAI-compatible), all browser-direct with SSE streaming and tool use |
+| `tests/e2e.mjs` | Free Node E2E test: one tiny real call through Gemini's OpenAI-compatible endpoint, asserts the response parses |
 | `search.js` | Web-search clients — Tavily and Brave |
 | `markdown.js` | A small, dependency-free Markdown→HTML renderer (escapes input, turns `[n]` into citation anchors) |
 
@@ -79,8 +80,41 @@ Delve needs two keys. Click **Keys & Settings** in the top bar to add them.
   `api.anthropic.com`.
 - **OpenAI** — get a key at [platform.openai.com](https://platform.openai.com).
   Default model `gpt-4o`. Sent only to `api.openai.com`.
+- **Gemini (free)** — get a free key at
+  [aistudio.google.com](https://aistudio.google.com/apikey). Default model
+  `gemini-2.0-flash`. Delve calls Google's **OpenAI-compatible** endpoint
+  (`…/v1beta/openai/chat/completions`) with the exact same request shape as
+  OpenAI, so it reuses the OpenAI client internally. That endpoint returns the
+  CORS headers a browser needs, so it works directly in-app *and* is the
+  reliable free path for the test harness (see below). Sent only to
+  `generativelanguage.googleapis.com`.
 
 You can override the model in settings; leave it blank to use the default.
+
+## Test for free with Gemini
+
+You can prove the LLM request/parse path works end-to-end for **free**, without
+spending anything on Anthropic or OpenAI, using Google Gemini.
+
+1. Get a free API key at
+   [aistudio.google.com/apikey](https://aistudio.google.com/apikey).
+2. Run the Node E2E test (no browser, so no CORS involved — it makes one tiny
+   real model call through Gemini's OpenAI-compatible endpoint and asserts the
+   response parses to non-empty text):
+
+   ```bash
+   GEMINI_API_KEY=your_key_here npm run test:e2e
+   # or, without npm:
+   GEMINI_API_KEY=your_key_here node tests/e2e.mjs
+   ```
+
+   It prints `PASS` and exits `0` on success, `FAIL: <reason>` and a non-zero
+   exit on failure, or `SKIP` (exit `0`) if `GEMINI_API_KEY` is unset. The call
+   uses `max_tokens: 20`, so it costs essentially nothing on the free tier.
+
+The same endpoint also powers the in-app **Gemini (free)** provider, so once the
+test passes you can select Gemini in **Keys & Settings** and run real research
+for free (subject to Gemini's free-tier rate limits).
 
 ### Web search (pick one)
 
@@ -117,9 +151,11 @@ To host your own copy: fork, enable Pages (Settings → Pages → deploy from
 
 ## Notes & limits
 
-- **CORS:** Tavily, Brave, OpenAI, and Anthropic's browser path all allow
-  direct browser requests. A web-search provider without CORS, or a corporate
-  proxy that strips headers, won't work — that's the tradeoff of having no backend.
+- **CORS:** Tavily, Brave, OpenAI, Anthropic's browser path, and Gemini's
+  OpenAI-compatible endpoint all allow direct browser requests (Gemini's
+  endpoint returns `Access-Control-Allow-Origin` for the page origin). A
+  web-search provider without CORS, or a corporate proxy that strips headers,
+  won't work — that's the tradeoff of having no backend.
 - **Reading depth:** Delve reads the extracted text the search provider returns
   rather than fetching and parsing each page itself (arbitrary cross-origin page
   fetches are blocked in the browser). Tavily's advanced extraction gives the

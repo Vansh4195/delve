@@ -94,16 +94,23 @@ function closeSettings() {
 function updateHints() {
   const llmProvider = selectedRadio("llmProvider");
   const searchProvider = selectedRadio("searchProvider");
+  const llmHints = {
+    anthropic: " Anthropic is called directly from the browser via its CORS-enabled path.",
+    openai: " Sent directly to the OpenAI API.",
+    gemini:
+      " Free: get a key at aistudio.google.com. Uses Gemini's OpenAI-compatible endpoint" +
+      " (the same request shape as OpenAI). It returns browser CORS headers, so it works in-app" +
+      " and is the reliable free path for the Node test harness.",
+  };
   els.modelHint.textContent =
     `Leave blank to use the default (${DEFAULT_MODELS[llmProvider]}).` +
-    (llmProvider === "anthropic"
-      ? " Anthropic is called directly from the browser via its CORS-enabled path."
-      : " Sent directly to the OpenAI API.");
+    (llmHints[llmProvider] || "");
   els.searchHint.textContent =
     searchProvider === "tavily"
       ? "Tavily free tier works well. Get a key at tavily.com — it returns extracted page text used for reading."
       : "Brave Search API key (search.brave.com/api). Returns titles + descriptions used as the readable extract.";
-  els.llmKey.placeholder = llmProvider === "anthropic" ? "sk-ant-..." : "sk-...";
+  els.llmKey.placeholder =
+    llmProvider === "anthropic" ? "sk-ant-..." : llmProvider === "gemini" ? "AIza..." : "sk-...";
   els.searchKey.placeholder = searchProvider === "tavily" ? "tvly-..." : "BSA...";
 }
 

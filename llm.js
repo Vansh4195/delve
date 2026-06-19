@@ -1,10 +1,21 @@
 // LLM clients — browser-direct (BYO key). Streaming + tool use.
 // Anthropic uses the anthropic-dangerous-direct-browser-access CORS path.
 // OpenAI is reachable directly from the browser with the bare key.
+// Gemini (free) speaks OpenAI's chat-completions shape, so it reuses the
+// OpenAI client pointed at Google's OpenAI-compatible endpoint. That endpoint
+// returns CORS headers for browser origins, so it works in-app as well as in
+// the Node test harness.
 
 export const DEFAULT_MODELS = {
   anthropic: "claude-opus-4-8",
   openai: "gpt-4o",
+  gemini: "gemini-2.0-flash",
+};
+
+// OpenAI-compatible base URLs per provider.
+const OPENAI_COMPAT_BASE = {
+  openai: "https://api.openai.com/v1/chat/completions",
+  gemini: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
 };
 
 // ---- shared streaming SSE reader -------------------------------------------
@@ -46,7 +57,11 @@ function truncate(s, n) {
 export function makeLLM({ provider, apiKey, model, signal }) {
   const resolvedModel = model && model.trim() ? model.trim() : DEFAULT_MODELS[provider];
   if (provider === "anthropic") return new AnthropicClient({ apiKey, model: resolvedModel, signal });
-  if (provider === "openai") return new OpenAIClient({ apiKey, model: resolvedModel, signal });
+  // OpenAI and Gemini both speak the OpenAI chat-completions shape — same
+  // client, different base URL.
+  if (provider === "openai" || provider === "gemini") {
+    return new OpenAIClient({ apiKey, model: resolvedModel, signal, baseUrl: OPENAI_COMPAT_BASE[provider] });
+  }
   throw new Error(`Unknown LLM provider: ${provider}`);
 }
 
@@ -133,11 +148,11 @@ class AnthropicClient {
 // ---- OpenAI -----------------------------------------------------------------
 
 class OpenAIClient {
-  constructor({ apiKey, model, signal }) {
+  constructor({ apiKey, model, signal, baseUrl }) {
     this.apiKey = apiKey;
     this.model = model;
     this.signal = signal;
-    this.url = "https://api.openai.com/v1/chat/completions";
+    this.url = baseUrl || "https://api.openai.com/v1/chat/completions";
   }
 
   headers() {
